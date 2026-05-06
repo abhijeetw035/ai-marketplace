@@ -63,16 +63,8 @@ struct DesignSystem {
         static let caption     = Font.caption
         static let micro       = Font.caption2
     }
-    
-    struct Shadow {
-        static let card = SwiftUI.Shadow(color: .black.opacity(0.06), radius: 8, x: 0, y: 2)
-        static let button = SwiftUI.Shadow(color: Color(hex: "#2563EB").opacity(0.3), radius: 6, x: 0, y: 3)
-    }
 }
 
-// MARK: - Shadow helper
-
-struct SwiftUI { struct Shadow { let color: Color; let radius: CGFloat; let x: CGFloat; let y: CGFloat } }
 
 // MARK: - Primary Button Style
 
