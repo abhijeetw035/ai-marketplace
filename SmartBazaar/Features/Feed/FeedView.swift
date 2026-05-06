@@ -88,45 +88,79 @@ struct FeedView: View {
 struct FeedItemCard: View {
     let listing: Listing
     
+    // Computed once per card render
+    private var trust: TrustScoreResult {
+        TrustScoreEngine.evaluate(listing: listing)
+    }
+    private var isSuspect: Bool { trust.grade == .suspect || trust.grade == .low }
+    
     var body: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.small) {
-            Rectangle()
-                .fill(Color.gray.opacity(0.2))
-                .frame(height: 200)
-                .cornerRadius(DesignSystem.CornerRadius.medium)
-                .overlay(
-                    Text("Image Placeholder")
-                        .foregroundColor(.gray)
-                )
+            // Image area
+            ZStack(alignment: .topLeading) {
+                Rectangle()
+                    .fill(Color.gray.opacity(isSuspect ? 0.15 : 0.2))
+                    .frame(height: 200)
+                    .cornerRadius(DesignSystem.CornerRadius.medium)
+                    .overlay(
+                        Group {
+                            if listing.images.isEmpty {
+                                Image(systemName: "photo")
+                                    .font(.largeTitle)
+                                    .foregroundColor(Color.gray.opacity(0.4))
+                            }
+                        }
+                    )
+                
+                // Suspicious overlay ribbon
+                if isSuspect {
+                    HStack(spacing: 4) {
+                        Image(systemName: trust.grade.icon)
+                            .font(.caption2)
+                        Text(trust.grade.rawValue.uppercased())
+                            .font(.caption2)
+                            .fontWeight(.bold)
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color(hex: trust.grade.colorHex))
+                    .cornerRadius(DesignSystem.CornerRadius.small)
+                    .padding(8)
+                }
+            }
             
+            // Info rows
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.tiny) {
                 Text(listing.title)
                     .font(.headline)
+                    .foregroundColor(Theme.primary)
                 
-                Text(String(format: "₹%.2f", listing.price))
+                Text(String(format: "₹%.0f", listing.price))
                     .font(.title3)
                     .fontWeight(.bold)
                     .foregroundColor(Theme.accent)
                 
                 HStack {
-                    if let score = listing.trustScore {
-                        Text("Trust Score: \(score)/100")
-                            .font(.caption)
-                            .foregroundColor(Theme.success)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Theme.success.opacity(0.1))
-                            .cornerRadius(DesignSystem.CornerRadius.small)
-                    }
+                    TrustBadge(result: trust)
+                    
                     Spacer()
-                    Text("Just now") // Mock timestamp
-                        .font(.caption)
+                    
+                    if let loc = listing.location {
+                        HStack(spacing: 2) {
+                            Image(systemName: "mappin.and.ellipse")
+                                .font(.caption2)
+                            Text(loc)
+                                .font(.caption)
+                        }
                         .foregroundColor(Theme.secondaryText)
+                    }
                 }
             }
             .padding(.horizontal, DesignSystem.Spacing.tiny)
         }
         .padding(.bottom, DesignSystem.Spacing.medium)
+        .opacity(trust.grade == .suspect ? 0.75 : 1.0)
     }
 }
 

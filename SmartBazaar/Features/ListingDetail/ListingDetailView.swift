@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ListingDetailView: View {
     @StateObject var viewModel: ListingDetailViewModel
+    @State private var trustResult: TrustScoreResult? = nil
     
     init(listing: Listing? = nil) {
         _viewModel = StateObject(wrappedValue: ListingDetailViewModel(listing: listing))
@@ -31,30 +32,28 @@ struct ListingDetailView: View {
                                 .font(.title2)
                                 .fontWeight(.bold)
                             
-                            Text(String(format: "₹%.2f", listing.price))
+                            Text(String(format: "₹%.0f", listing.price))
                                 .font(.title)
                                 .fontWeight(.bold)
                                 .foregroundColor(Theme.accent)
                             
                             HStack {
-                                if let score = listing.trustScore {
-                                    Text("Trust Score: \(score)/100")
-                                        .font(.caption)
-                                        .fontWeight(.semibold)
-                                        .foregroundColor(Theme.success)
-                                        .padding(.horizontal, 8)
-                                        .padding(.vertical, 4)
-                                        .background(Theme.success.opacity(0.1))
-                                        .cornerRadius(DesignSystem.CornerRadius.small)
+                                if let trust = trustResult {
+                                    TrustBadge(result: trust)
                                 }
-                                
                                 Spacer()
-                                
                                 Text("Posted 2 hours ago")
                                     .font(.caption)
                                     .foregroundColor(Theme.secondaryText)
                             }
                         }
+                    
+                    Divider()
+                    
+                    // Trust Score Panel
+                    if let trust = trustResult {
+                        TrustScorePanel(result: trust)
+                    }
                     
                     Divider()
                     
@@ -83,10 +82,12 @@ struct ListingDetailView: View {
                         Text("Description")
                             .font(.headline)
                         
-                        Text(listing.description)
-                            .font(.body)
-                            .foregroundColor(Theme.secondaryText)
-                            .fixedSize(horizontal: false, vertical: true)
+                        if let listing = viewModel.listing {
+                            Text(listing.description)
+                                .font(.body)
+                                .foregroundColor(Theme.secondaryText)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
                     }
                     }
                     
@@ -96,6 +97,11 @@ struct ListingDetailView: View {
             }
         }
         .edgesIgnoringSafeArea(.top)
+        .onAppear {
+            if let listing = viewModel.listing {
+                trustResult = TrustScoreEngine.evaluate(listing: listing)
+            }
+        }
         .overlay(
             VStack {
                 Spacer()
