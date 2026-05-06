@@ -10,8 +10,8 @@ class FeedViewModel: ObservableObject {
     
     private let listingService: ListingServiceProtocol
     
-    init(listingService: ListingServiceProtocol = MockListingService()) {
-        self.listingService = listingService
+    init(listingService: ListingServiceProtocol? = nil) {
+        self.listingService = listingService ?? MockListingService()
     }
     
     func fetchListings() {

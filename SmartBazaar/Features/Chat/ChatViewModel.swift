@@ -15,9 +15,9 @@ class ChatViewModel: ObservableObject {
     private let chatService: ChatServiceProtocol
     private let currentUserId = "currentUser123" // Mocked
     
-    init(chatId: String, chatService: ChatServiceProtocol = MockChatService()) {
+    init(chatId: String, chatService: ChatServiceProtocol? = nil) {
         self.chatId = chatId
-        self.chatService = chatService
+        self.chatService = chatService ?? MockChatService()
     }
     
     func fetchMessages() {

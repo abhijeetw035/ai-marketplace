@@ -14,9 +14,10 @@ class AuthViewModel: ObservableObject {
     
     private let authService: AuthServiceProtocol
     
-    init(authService: AuthServiceProtocol = MockAuthService()) {
-        self.authService = authService
-        self.isAuthenticated = authService.isAuthenticated
+    init(authService: AuthServiceProtocol? = nil) {
+        let service = authService ?? MockAuthService()
+        self.authService = service
+        self.isAuthenticated = service.isAuthenticated
     }
     
     func login() {

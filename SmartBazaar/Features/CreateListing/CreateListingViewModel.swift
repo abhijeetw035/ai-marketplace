@@ -16,8 +16,8 @@ class CreateListingViewModel: ObservableObject {
     private let listingService: ListingServiceProtocol
     // private let aiService: AIServiceProtocol // To be added in Phase 3
     
-    init(listingService: ListingServiceProtocol = MockListingService()) {
-        self.listingService = listingService
+    init(listingService: ListingServiceProtocol? = nil) {
+        self.listingService = listingService ?? MockListingService()
     }
     
     func suggestPrice() {

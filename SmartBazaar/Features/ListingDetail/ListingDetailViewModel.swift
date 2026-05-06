@@ -9,8 +9,8 @@ class ListingDetailViewModel: ObservableObject {
     
     private let listingService: ListingServiceProtocol
     
-    init(listingService: ListingServiceProtocol = MockListingService(), listing: Listing? = nil) {
-        self.listingService = listingService
+    init(listingService: ListingServiceProtocol? = nil, listing: Listing? = nil) {
+        self.listingService = listingService ?? MockListingService()
         self.listing = listing
     }
     

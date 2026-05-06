@@ -11,9 +11,9 @@ class SearchViewModel: ObservableObject {
     private let aiService: AIServiceProtocol
     private let listingService: ListingServiceProtocol
     
-    init(aiService: AIServiceProtocol = MockAIService(), listingService: ListingServiceProtocol = MockListingService()) {
-        self.aiService = aiService
-        self.listingService = listingService
+    init(aiService: AIServiceProtocol? = nil, listingService: ListingServiceProtocol? = nil) {
+        self.aiService = aiService ?? MockAIService()
+        self.listingService = listingService ?? MockListingService()
     }
     
     func performSearch() {

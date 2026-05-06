@@ -8,9 +8,9 @@ struct CreateListingView: View {
             Form {
                 Section(header: Text("Details")) {
                     TextField("Title", text: $viewModel.title)
-                        .onChange(of: viewModel.title) { _ in viewModel.suggestPrice() }
+                        .onChange(of: viewModel.title) { viewModel.suggestPrice() }
                     TextField("Description", text: $viewModel.description)
-                        .onChange(of: viewModel.description) { _ in viewModel.suggestPrice() }
+                        .onChange(of: viewModel.description) { viewModel.suggestPrice() }
                 }
                 
                 Section(header: Text("Pricing"), footer: Text("Our AI will suggest a price once details are filled.")) {
