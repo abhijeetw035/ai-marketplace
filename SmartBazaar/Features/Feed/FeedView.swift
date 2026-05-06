@@ -6,7 +6,10 @@ struct FeedView: View {
             ScrollView {
                 VStack(spacing: DesignSystem.Spacing.medium) {
                     ForEach(0..<5) { index in
-                        FeedItemCard()
+                        NavigationLink(destination: ListingDetailView()) {
+                            FeedItemCard()
+                        }
+                        .buttonStyle(PlainButtonStyle())
                     }
                 }
                 .padding()
