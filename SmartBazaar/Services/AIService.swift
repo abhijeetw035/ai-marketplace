@@ -38,29 +38,55 @@ class MockAIService: AIServiceProtocol {
         var budget: Double? = nil
         var category: String? = nil
         var keywords: [String] = []
+        var useCase: String? = nil
         
-        // Very basic mock heuristic for "intent" extraction
-        if lowerQuery.contains("cheap") || lowerQuery.contains("under 30k") {
-            budget = 30000.0
+        // Extract budget
+        let numbers = lowerQuery.components(separatedBy: CharacterSet.decimalDigits.inverted).filter { !$0.isEmpty }
+        if let firstNum = numbers.first, let val = Double(firstNum) {
+            budget = val
+            if lowerQuery.contains("k") { budget! *= 1000 }
+        } else if lowerQuery.contains("cheap") || lowerQuery.contains("budget") {
+            budget = 20000.0
         }
         
-        if lowerQuery.contains("iphone") || lowerQuery.contains("laptop") {
+        // Extract category
+        if lowerQuery.contains("iphone") || lowerQuery.contains("laptop") || lowerQuery.contains("phone") {
             category = "Electronics"
-            keywords.append(lowerQuery.contains("iphone") ? "iPhone" : "Laptop")
+        } else if lowerQuery.contains("chair") || lowerQuery.contains("desk") || lowerQuery.contains("table") {
+            category = "Furniture"
+        } else if lowerQuery.contains("bike") || lowerQuery.contains("car") {
+            category = "Vehicles"
         }
         
-        if lowerQuery.contains("gaming") {
-            keywords.append("gaming")
+        // Extract use case
+        if lowerQuery.contains("gaming") { useCase = "Gaming" }
+        else if lowerQuery.contains("study") || lowerQuery.contains("student") { useCase = "Student/Study" }
+        else if lowerQuery.contains("office") || lowerQuery.contains("work") { useCase = "Office Work" }
+        
+        if let uc = useCase { keywords.append(uc) }
+        
+        // Filter & Re-rank
+        var rankedListings = currentListings.map { listing -> (Listing, Int) in
+            var score = 0
+            if let cat = category, listing.category == cat { score += 50 }
+            if let maxB = budget, listing.price <= maxB { score += 30 }
+            if let uc = useCase, listing.description.lowercased().contains(uc.lowercased()) || listing.title.lowercased().contains(uc.lowercased()) { score += 40 }
+            
+            // Basic keyword match
+            for word in lowerQuery.components(separatedBy: " ") {
+                if word.count > 3 && (listing.title.lowercased().contains(word) || listing.description.lowercased().contains(word)) {
+                    score += 10
+                }
+            }
+            return (listing, score)
         }
         
-        // Filter mock listings
-        let filtered = currentListings.filter { listing in
-            if let cat = category, listing.category != cat { return false }
-            if let maxB = budget, listing.price > maxB { return false }
-            return true
-        }
+        rankedListings.removeAll(where: { $0.1 < 20 }) // Fallback logic: must have some relevance
+        rankedListings.sort(by: { $0.1 > $1.1 })
         
-        return IntentSearchResult(category: category, budget: budget, keywords: keywords, listings: filtered)
+        let finalResults = rankedListings.map { $0.0 }
+        
+        return IntentSearchResult(category: category, budget: budget, keywords: keywords, listings: finalResults)
     }
     
     func suggestPrice(title: String, description: String, category: String, condition: String) async throws -> PriceSuggestionResult {
