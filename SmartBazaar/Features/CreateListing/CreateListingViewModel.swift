@@ -17,7 +17,7 @@ class CreateListingViewModel: ObservableObject {
     // private let aiService: AIServiceProtocol // To be added in Phase 3
     
     init(listingService: ListingServiceProtocol? = nil) {
-        self.listingService = listingService ?? MockListingService()
+        self.listingService = listingService ?? FirebaseListingService()
     }
     
     func suggestPrice() {

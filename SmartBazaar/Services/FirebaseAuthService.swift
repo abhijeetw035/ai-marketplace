@@ -1,7 +1,7 @@
 import Foundation
-// import FirebaseAuth // UNCOMMENT AFTER ADDING FIREBASE SDK
+import Combine
+import FirebaseAuth
 
-/*
 class FirebaseAuthService: AuthServiceProtocol, ObservableObject {
     @Published var currentUser: User?
     
@@ -10,7 +10,7 @@ class FirebaseAuthService: AuthServiceProtocol, ObservableObject {
     }
     
     init() {
-        Auth.auth().addStateDidChangeListener { [weak self] _, user in
+        _ = Auth.auth().addStateDidChangeListener { [weak self] _, user in
             if let user = user {
                 self?.currentUser = User(
                     id: user.uid,
@@ -59,4 +59,3 @@ class FirebaseAuthService: AuthServiceProtocol, ObservableObject {
         try Auth.auth().signOut()
     }
 }
-*/

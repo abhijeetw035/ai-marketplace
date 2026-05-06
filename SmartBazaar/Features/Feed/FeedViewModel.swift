@@ -11,7 +11,7 @@ class FeedViewModel: ObservableObject {
     private let listingService: ListingServiceProtocol
     
     init(listingService: ListingServiceProtocol? = nil) {
-        self.listingService = listingService ?? MockListingService()
+        self.listingService = listingService ?? FirebaseListingService()
     }
     
     func fetchListings() {

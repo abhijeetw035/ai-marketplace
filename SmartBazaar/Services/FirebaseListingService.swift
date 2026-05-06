@@ -1,8 +1,7 @@
 import Foundation
-// import FirebaseFirestore // UNCOMMENT AFTER ADDING FIREBASE SDK
-// import FirebaseFirestoreSwift
+import FirebaseFirestore
+import FirebaseFirestoreSwift
 
-/*
 class FirebaseListingService: ListingServiceProtocol {
     private let db = Firestore.firestore()
     
@@ -32,4 +31,3 @@ class FirebaseListingService: ListingServiceProtocol {
         return listing
     }
 }
-*/

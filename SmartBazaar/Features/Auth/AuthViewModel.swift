@@ -15,7 +15,7 @@ class AuthViewModel: ObservableObject {
     private let authService: AuthServiceProtocol
     
     init(authService: AuthServiceProtocol? = nil) {
-        let service = authService ?? MockAuthService()
+        let service = authService ?? FirebaseAuthService()
         self.authService = service
         self.isAuthenticated = service.isAuthenticated
     }

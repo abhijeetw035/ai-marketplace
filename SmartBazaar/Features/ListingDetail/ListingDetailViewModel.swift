@@ -10,7 +10,7 @@ class ListingDetailViewModel: ObservableObject {
     private let listingService: ListingServiceProtocol
     
     init(listingService: ListingServiceProtocol? = nil, listing: Listing? = nil) {
-        self.listingService = listingService ?? MockListingService()
+        self.listingService = listingService ?? FirebaseListingService()
         self.listing = listing
     }
     
