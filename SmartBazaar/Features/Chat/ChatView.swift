@@ -11,16 +11,59 @@ struct ChatView: View {
         VStack {
             // AI Negotiation Assistant Banner
             if let hint = viewModel.negotiationHint {
-                HStack {
-                    Image(systemName: "sparkles")
-                        .foregroundColor(Theme.accent)
-                    Text(hint)
-                        .font(.caption)
-                        .foregroundColor(Theme.accent)
-                    Spacer()
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Image(systemName: "sparkles")
+                            .foregroundColor(Theme.accent)
+                        Text(hint)
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundColor(Theme.primary)
+                        Spacer()
+                        if let prob = viewModel.dealProbability {
+                            Text("\(prob)% Deal")
+                                .font(.caption)
+                                .fontWeight(.bold)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(prob > 70 ? Theme.success.opacity(0.2) : Theme.warning.opacity(0.2))
+                                .foregroundColor(prob > 70 ? Theme.success : Theme.warning)
+                                .cornerRadius(DesignSystem.CornerRadius.small)
+                        }
+                    }
+                    
+                    if !viewModel.quickReplies.isEmpty {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack {
+                                ForEach(viewModel.quickReplies, id: \.self) { reply in
+                                    Button(action: {
+                                        viewModel.sendMessage(text: reply)
+                                    }) {
+                                        Text(reply)
+                                            .font(.caption)
+                                            .padding(.horizontal, 12)
+                                            .padding(.vertical, 6)
+                                            .background(Theme.background)
+                                            .foregroundColor(Theme.accent)
+                                            .cornerRadius(DesignSystem.CornerRadius.large)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.large)
+                                                    .stroke(Theme.accent.opacity(0.5), lineWidth: 1)
+                                            )
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
                 .padding()
-                .background(Theme.accent.opacity(0.1))
+                .background(Theme.secondaryBackground)
+                .overlay(
+                    Rectangle()
+                        .frame(height: 1)
+                        .foregroundColor(Theme.border),
+                    alignment: .bottom
+                )
             }
             
             // Messages List

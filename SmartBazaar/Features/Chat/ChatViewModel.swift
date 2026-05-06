@@ -10,14 +10,21 @@ class ChatViewModel: ObservableObject {
     
     // AI Negotiation Assistant properties
     @Published var negotiationHint: String? = nil
+    @Published var dealProbability: Int? = nil
+    @Published var quickReplies: [String] = []
     
     let chatId: String
+    let itemPrice: Double // Needed for analysis
+    
     private let chatService: ChatServiceProtocol
+    private let aiService: AIServiceProtocol
     private let currentUserId = "currentUser123" // Mocked
     
-    init(chatId: String, chatService: ChatServiceProtocol? = nil) {
+    init(chatId: String, itemPrice: Double = 5000.0, chatService: ChatServiceProtocol? = nil, aiService: AIServiceProtocol? = nil) {
         self.chatId = chatId
-        self.chatService = chatService ?? MockChatService()
+        self.itemPrice = itemPrice
+        self.chatService = chatService ?? FirebaseChatService()
+        self.aiService = aiService ?? MockAIService()
     }
     
     func fetchMessages() {
@@ -34,15 +41,22 @@ class ChatViewModel: ObservableObject {
         }
     }
     
-    func sendMessage() {
-        guard !inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+    func sendMessage(text: String? = nil) {
+        let textToSend = text ?? inputText
+        guard !textToSend.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         
-        let textToSend = inputText
-        inputText = ""
+        if text == nil {
+            inputText = ""
+        }
         
         // Optimistic UI update
         let optimisticMsg = Message(id: UUID().uuidString, chatId: chatId, senderId: currentUserId, text: textToSend, mediaUrl: nil, timestamp: Date(), readStatus: false, offerAmount: nil)
         messages.append(optimisticMsg)
+        
+        // Clear UI hints immediately
+        negotiationHint = nil
+        dealProbability = nil
+        quickReplies = []
         
         Task {
             do {
@@ -50,7 +64,6 @@ class ChatViewModel: ObservableObject {
                 if let index = messages.firstIndex(where: { $0.id == optimisticMsg.id }) {
                     messages[index] = sentMsg
                 }
-                negotiationHint = nil // Clear hint after sending
             } catch {
                 self.errorMessage = error.localizedDescription
             }
@@ -58,10 +71,19 @@ class ChatViewModel: ObservableObject {
     }
     
     private func analyzeLatestMessageForNegotiation() {
-        // Mock Phase 4: AI Negotiation Assistant logic
-        if let lastMessage = messages.last, lastMessage.senderId != currentUserId {
-            if lastMessage.text.contains("4000") || lastMessage.offerAmount != nil {
-                self.negotiationHint = "AI: Try countering with ₹4,200. Buyer is likely to accept."
+        guard let lastMessage = messages.last, lastMessage.senderId != currentUserId else { return }
+        
+        Task {
+            do {
+                let analysis = try await aiService.analyzeNegotiation(message: lastMessage.text, currentPrice: itemPrice, isSeller: true)
+                
+                if analysis.isOffer {
+                    self.negotiationHint = analysis.suggestionText
+                    self.dealProbability = analysis.dealProbability
+                    self.quickReplies = analysis.quickReplies
+                }
+            } catch {
+                print("Failed to analyze negotiation: \(error)")
             }
         }
     }

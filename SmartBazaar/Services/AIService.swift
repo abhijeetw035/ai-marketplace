@@ -15,9 +15,18 @@ struct PriceSuggestionResult {
     let explanation: String
 }
 
+struct NegotiationAnalysisResult {
+    let isOffer: Bool
+    let detectedAmount: Double?
+    let dealProbability: Int // 0 to 100
+    let suggestionText: String
+    let quickReplies: [String]
+}
+
 protocol AIServiceProtocol {
     func parseSearchIntent(query: String, currentListings: [Listing]) async throws -> IntentSearchResult
     func suggestPrice(title: String, description: String, category: String, condition: String) async throws -> PriceSuggestionResult
+    func analyzeNegotiation(message: String, currentPrice: Double, isSeller: Bool) async throws -> NegotiationAnalysisResult
 }
 
 class MockAIService: AIServiceProtocol {
@@ -101,6 +110,57 @@ class MockAIService: AIServiceProtocol {
             sellFastPrice: sellFastPrice,
             confidence: "High",
             explanation: explanation
+        )
+    
+    func analyzeNegotiation(message: String, currentPrice: Double, isSeller: Bool) async throws -> NegotiationAnalysisResult {
+        try await Task.sleep(nanoseconds: 800_000_000)
+        
+        let lowerMsg = message.lowercased()
+        
+        // Extract numbers
+        let numbers = message.components(separatedBy: CharacterSet.decimalDigits.inverted)
+            .filter { !$0.isEmpty }
+            .compactMap { Double($0) }
+            
+        let detectedAmount = numbers.first
+        let isOffer = detectedAmount != nil || lowerMsg.contains("offer") || lowerMsg.contains("discount")
+        
+        if !isOffer {
+            return NegotiationAnalysisResult(isOffer: false, detectedAmount: nil, dealProbability: 0, suggestionText: "", quickReplies: [])
+        }
+        
+        var probability = 50
+        var suggestion = ""
+        var replies: [String] = []
+        
+        if let offer = detectedAmount {
+            let ratio = offer / currentPrice
+            if ratio >= 0.9 {
+                probability = 90
+                suggestion = "Great offer! Consider accepting or rounding to ₹\(Int(currentPrice))."
+                replies = ["I'll take it", "Make it ₹\(Int(currentPrice)) and it's yours"]
+            } else if ratio >= 0.75 {
+                probability = 70
+                let counter = Int((currentPrice + offer) / 2)
+                suggestion = "Reasonable offer. Counter with ₹\(counter) to meet in the middle."
+                replies = ["How about ₹\(counter)?", "I can do ₹\(counter)"]
+            } else {
+                probability = 20
+                suggestion = "Lowball offer. Hold firm or offer a minimal discount."
+                replies = ["Too low, sorry.", "Best I can do is ₹\(Int(currentPrice * 0.9))"]
+            }
+        } else {
+            probability = 60
+            suggestion = "Buyer is probing for a discount. Ask what they have in mind."
+            replies = ["What's your offer?", "Price is slightly negotiable."]
+        }
+        
+        return NegotiationAnalysisResult(
+            isOffer: true,
+            detectedAmount: detectedAmount,
+            dealProbability: probability,
+            suggestionText: suggestion,
+            quickReplies: replies
         )
     }
 }
