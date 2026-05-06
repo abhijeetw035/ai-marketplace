@@ -4,7 +4,7 @@ struct CreateListingView: View {
     @StateObject private var viewModel = CreateListingViewModel()
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 Section(header: Text("Details")) {
                     TextField("Title", text: $viewModel.title)
@@ -13,17 +13,33 @@ struct CreateListingView: View {
                         .onChange(of: viewModel.description) { viewModel.suggestPrice() }
                 }
                 
-                Section(header: Text("Pricing"), footer: Text("Our AI will suggest a price once details are filled.")) {
+                Section(header: Text("Pricing"), footer: Text("Our AI suggests an optimal price to help you sell faster.")) {
                     TextField("Price (₹)", text: $viewModel.price)
                         .keyboardType(.numberPad)
                     
-                    if let suggestion = viewModel.suggestedPriceRange {
+                    if viewModel.isFetchingSuggestion {
                         HStack {
-                            Image(systemName: "wand.and.stars")
-                                .foregroundColor(Theme.accent)
-                            Text("Suggested: \(suggestion)")
-                                .foregroundColor(Theme.accent)
+                            ProgressView()
+                                .padding(.trailing, 4)
+                            Text("Analyzing market price...")
+                                .foregroundColor(Theme.secondaryText)
+                                .font(.subheadline)
                         }
+                    } else if let suggestion = viewModel.suggestedPriceRange, let explanation = viewModel.aiExplanation {
+                        VStack(alignment: .leading, spacing: 6) {
+                            HStack {
+                                Image(systemName: "sparkles")
+                                    .foregroundColor(Theme.accent)
+                                Text("AI Suggested Range: \(suggestion)")
+                                    .foregroundColor(Theme.accent)
+                                    .fontWeight(.medium)
+                            }
+                            Text(explanation)
+                                .font(.caption)
+                                .foregroundColor(Theme.secondaryText)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .padding(.vertical, 4)
                     }
                 }
                 
