@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 // MARK: - Pending Action Model
 
@@ -43,7 +44,7 @@ protocol SyncServiceProtocol: ObservableObject {
 
 // MARK: - Production Sync Service
 
-final class PersistentSyncService: SyncServiceProtocol {
+final class PersistentSyncService: SyncServiceProtocol, ObservableObject {
     
     @Published private(set) var pendingCount: Int = 0
     

@@ -40,7 +40,7 @@ final class NotificationService {
     func scheduleWishlistNotification(listingTitle: String) {
         let content = UNMutableNotificationContent()
         content.title = "Someone saved your listing!"
-        content.body = ""\(listingTitle)" was added to a buyer's wishlist."
+        content.body = "\"\(listingTitle)\" was added to a buyer's wishlist."
         content.sound = .default
         content.userInfo = ["type": "wishlist_save"]
         
