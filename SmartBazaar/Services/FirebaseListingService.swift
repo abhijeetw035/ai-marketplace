@@ -1,6 +1,4 @@
-import Foundation
 import FirebaseFirestore
-import FirebaseFirestoreSwift
 
 class FirebaseListingService: ListingServiceProtocol {
     private let db = Firestore.firestore()
