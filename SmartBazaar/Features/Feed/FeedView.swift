@@ -1,26 +1,53 @@
 import SwiftUI
 
 struct FeedView: View {
+    @StateObject private var viewModel = FeedViewModel()
+    
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(spacing: DesignSystem.Spacing.medium) {
-                    ForEach(0..<5) { index in
-                        NavigationLink(destination: ListingDetailView()) {
-                            FeedItemCard()
+            Group {
+                if viewModel.isLoading {
+                    ProgressView("Loading items...")
+                } else if let error = viewModel.errorMessage {
+                    VStack {
+                        Text("Failed to load feed.")
+                            .foregroundColor(Theme.error)
+                        Text(error)
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                        Button("Retry") {
+                            viewModel.fetchListings()
                         }
-                        .buttonStyle(PlainButtonStyle())
+                        .padding()
+                    }
+                } else {
+                    ScrollView {
+                        VStack(spacing: DesignSystem.Spacing.medium) {
+                            ForEach(viewModel.listings) { listing in
+                                NavigationLink(destination: ListingDetailView(listing: listing)) {
+                                    FeedItemCard(listing: listing)
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                            }
+                        }
+                        .padding()
                     }
                 }
-                .padding()
             }
             .navigationTitle("Marketplace")
             .background(Theme.secondaryBackground)
+            .onAppear {
+                if viewModel.listings.isEmpty {
+                    viewModel.fetchListings()
+                }
+            }
         }
     }
 }
 
 struct FeedItemCard: View {
+    let listing: Listing
+    
     var body: some View {
         VStack(alignment: .leading, spacing: DesignSystem.Spacing.small) {
             Rectangle()
@@ -33,24 +60,26 @@ struct FeedItemCard: View {
                 )
             
             VStack(alignment: .leading, spacing: DesignSystem.Spacing.tiny) {
-                Text("Item Title")
+                Text(listing.title)
                     .font(.headline)
                 
-                Text("₹4,500")
+                Text(String(format: "₹%.2f", listing.price))
                     .font(.title3)
                     .fontWeight(.bold)
                     .foregroundColor(Theme.accent)
                 
                 HStack {
-                    Text("Trust Score: 92/100")
-                        .font(.caption)
-                        .foregroundColor(Theme.success)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Theme.success.opacity(0.1))
-                        .cornerRadius(DesignSystem.CornerRadius.small)
+                    if let score = listing.trustScore {
+                        Text("Trust Score: \(score)/100")
+                            .font(.caption)
+                            .foregroundColor(Theme.success)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Theme.success.opacity(0.1))
+                            .cornerRadius(DesignSystem.CornerRadius.small)
+                    }
                     Spacer()
-                    Text("Just now")
+                    Text("Just now") // Mock timestamp
                         .font(.caption)
                         .foregroundColor(Theme.secondaryText)
                 }

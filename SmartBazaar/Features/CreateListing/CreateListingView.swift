@@ -1,39 +1,59 @@
 import SwiftUI
 
 struct CreateListingView: View {
-    @State private var title = ""
-    @State private var description = ""
-    @State private var price = ""
+    @StateObject private var viewModel = CreateListingViewModel()
     
     var body: some View {
         NavigationView {
             Form {
                 Section(header: Text("Details")) {
-                    TextField("Title", text: $title)
-                    TextField("Description", text: $description)
+                    TextField("Title", text: $viewModel.title)
+                        .onChange(of: viewModel.title) { _ in viewModel.suggestPrice() }
+                    TextField("Description", text: $viewModel.description)
+                        .onChange(of: viewModel.description) { _ in viewModel.suggestPrice() }
                 }
                 
                 Section(header: Text("Pricing"), footer: Text("Our AI will suggest a price once details are filled.")) {
-                    TextField("Price (₹)", text: $price)
+                    TextField("Price (₹)", text: $viewModel.price)
                         .keyboardType(.numberPad)
                     
-                    HStack {
-                        Image(systemName: "wand.and.stars")
-                            .foregroundColor(Theme.accent)
-                        Text("Suggested: ₹4,200 - ₹4,800")
-                            .foregroundColor(Theme.accent)
+                    if let suggestion = viewModel.suggestedPriceRange {
+                        HStack {
+                            Image(systemName: "wand.and.stars")
+                                .foregroundColor(Theme.accent)
+                            Text("Suggested: \(suggestion)")
+                                .foregroundColor(Theme.accent)
+                        }
+                    }
+                }
+                
+                if let error = viewModel.errorMessage {
+                    Section {
+                        Text(error)
+                            .foregroundColor(Theme.error)
+                            .font(.caption)
                     }
                 }
                 
                 Section {
                     Button(action: {
-                        // Publish action
+                        Task {
+                            await viewModel.publishListing()
+                        }
                     }) {
-                        Text("Publish Listing")
-                            .frame(maxWidth: .infinity, alignment: .center)
-                            .foregroundColor(.white)
+                        HStack {
+                            if viewModel.isPublishing {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    .padding(.trailing, 4)
+                            }
+                            Text(viewModel.isPublishing ? "Publishing..." : "Publish Listing")
+                                .frame(maxWidth: .infinity, alignment: .center)
+                                .foregroundColor(.white)
+                        }
                     }
                     .listRowBackground(Theme.accent)
+                    .disabled(viewModel.isPublishing)
                 }
             }
             .navigationTitle("Sell an Item")

@@ -1,30 +1,50 @@
 import SwiftUI
 
 struct ChatView: View {
-    @State private var messageText = ""
+    @StateObject var viewModel: ChatViewModel
+    
+    init(chatId: String = "defaultChatId") {
+        _viewModel = StateObject(wrappedValue: ChatViewModel(chatId: chatId))
+    }
     
     var body: some View {
         VStack {
             // AI Negotiation Assistant Banner
-            HStack {
-                Image(systemName: "sparkles")
-                    .foregroundColor(Theme.accent)
-                Text("AI: Try countering with ₹4,200. Buyer is likely to accept.")
-                    .font(.caption)
-                    .foregroundColor(Theme.accent)
-                Spacer()
+            if let hint = viewModel.negotiationHint {
+                HStack {
+                    Image(systemName: "sparkles")
+                        .foregroundColor(Theme.accent)
+                    Text(hint)
+                        .font(.caption)
+                        .foregroundColor(Theme.accent)
+                    Spacer()
+                }
+                .padding()
+                .background(Theme.accent.opacity(0.1))
             }
-            .padding()
-            .background(Theme.accent.opacity(0.1))
             
             // Messages List
             ScrollView {
-                VStack(spacing: DesignSystem.Spacing.medium) {
-                    ChatBubble(message: "Is this still available?", isCurrentUser: false)
-                    ChatBubble(message: "Yes, it is!", isCurrentUser: true)
-                    ChatBubble(message: "Would you take 4000?", isCurrentUser: false)
+                ScrollViewReader { proxy in
+                    VStack(spacing: DesignSystem.Spacing.medium) {
+                        if viewModel.isLoading {
+                            ProgressView()
+                                .padding()
+                        }
+                        ForEach(viewModel.messages) { message in
+                            ChatBubble(message: message.text, isCurrentUser: viewModel.isCurrentUser(message))
+                                .id(message.id)
+                        }
+                    }
+                    .padding()
+                    .onChange(of: viewModel.messages.count) { _ in
+                        if let lastMessage = viewModel.messages.last {
+                            withAnimation {
+                                proxy.scrollTo(lastMessage.id, anchor: .bottom)
+                            }
+                        }
+                    }
                 }
-                .padding()
             }
             
             // Input Area
@@ -37,13 +57,16 @@ struct ChatView: View {
                         .foregroundColor(.gray)
                 }
                 
-                TextField("Message...", text: $messageText)
+                TextField("Message...", text: $viewModel.inputText)
                     .padding(10)
                     .background(Theme.secondaryBackground)
                     .cornerRadius(20)
+                    .onSubmit {
+                        viewModel.sendMessage()
+                    }
                 
                 Button(action: {
-                    // Send message
+                    viewModel.sendMessage()
                 }) {
                     Image(systemName: "paperplane.fill")
                         .font(.title2)
@@ -55,6 +78,11 @@ struct ChatView: View {
         }
         .navigationTitle("John Doe")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            if viewModel.messages.isEmpty {
+                viewModel.fetchMessages()
+            }
+        }
     }
 }
 

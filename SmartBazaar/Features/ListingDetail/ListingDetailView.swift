@@ -1,6 +1,11 @@
 import SwiftUI
 
 struct ListingDetailView: View {
+    @StateObject var viewModel: ListingDetailViewModel
+    
+    init(listing: Listing? = nil) {
+        _viewModel = StateObject(wrappedValue: ListingDetailViewModel(listing: listing))
+    }
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
@@ -20,33 +25,36 @@ struct ListingDetailView: View {
                 
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.medium) {
                     // Header Info
-                    VStack(alignment: .leading, spacing: DesignSystem.Spacing.tiny) {
-                        Text("Item Title")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                        
-                        Text("₹4,500")
-                            .font(.title)
-                            .fontWeight(.bold)
-                            .foregroundColor(Theme.accent)
-                        
-                        HStack {
-                            Text("Trust Score: 92/100")
-                                .font(.caption)
-                                .fontWeight(.semibold)
-                                .foregroundColor(Theme.success)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(Theme.success.opacity(0.1))
-                                .cornerRadius(DesignSystem.CornerRadius.small)
+                    if let listing = viewModel.listing {
+                        VStack(alignment: .leading, spacing: DesignSystem.Spacing.tiny) {
+                            Text(listing.title)
+                                .font(.title2)
+                                .fontWeight(.bold)
                             
-                            Spacer()
+                            Text(String(format: "₹%.2f", listing.price))
+                                .font(.title)
+                                .fontWeight(.bold)
+                                .foregroundColor(Theme.accent)
                             
-                            Text("Posted 2 hours ago")
-                                .font(.caption)
-                                .foregroundColor(Theme.secondaryText)
+                            HStack {
+                                if let score = listing.trustScore {
+                                    Text("Trust Score: \(score)/100")
+                                        .font(.caption)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(Theme.success)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(Theme.success.opacity(0.1))
+                                        .cornerRadius(DesignSystem.CornerRadius.small)
+                                }
+                                
+                                Spacer()
+                                
+                                Text("Posted 2 hours ago")
+                                    .font(.caption)
+                                    .foregroundColor(Theme.secondaryText)
+                            }
                         }
-                    }
                     
                     Divider()
                     
@@ -75,10 +83,11 @@ struct ListingDetailView: View {
                         Text("Description")
                             .font(.headline)
                         
-                        Text("This is a placeholder description. The actual item details will appear here once connected to the backend. Features, condition, and other details are listed in this section.")
+                        Text(listing.description)
                             .font(.body)
                             .foregroundColor(Theme.secondaryText)
                             .fixedSize(horizontal: false, vertical: true)
+                    }
                     }
                     
                     Spacer(minLength: 80) // Space for bottom buttons
