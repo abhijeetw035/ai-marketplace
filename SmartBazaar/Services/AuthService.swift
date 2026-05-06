@@ -10,7 +10,7 @@ protocol AuthServiceProtocol {
     func logout() throws
 }
 
-class MockAuthService: AuthServiceProtocol {
+class MockAuthService: AuthServiceProtocol, ObservableObject {
     @Published var currentUser: User?
     var isAuthenticated: Bool { currentUser != nil }
     
