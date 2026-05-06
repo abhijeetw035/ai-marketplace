@@ -5,7 +5,10 @@ struct FeedView: View {
     
     var body: some View {
         NavigationStack {
-            Group {
+            VStack(spacing: 0) {
+                OfflineBanner(pendingCount: viewModel.pendingSyncCount)
+                
+                Group {
                 if viewModel.isLoading {
                     ProgressView("Loading items...")
                 } else if let error = viewModel.errorMessage {
@@ -73,9 +76,10 @@ struct FeedView: View {
                         }
                     }
                 }
-            }
+                }
+                .background(Theme.background)
+            } // end VStack
             .navigationTitle("Marketplace")
-            .background(Theme.background)
             .onAppear {
                 if viewModel.listings.isEmpty {
                     viewModel.fetchListings()

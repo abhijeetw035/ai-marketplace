@@ -137,8 +137,9 @@ class MockAIService: AIServiceProtocol {
             confidence: "High",
             explanation: explanation
         )
-        
-        func analyzeNegotiation(message: String, currentPrice: Double, isSeller: Bool) async throws -> NegotiationAnalysisResult {
+    }
+    
+    func analyzeNegotiation(message: String, currentPrice: Double, isSeller: Bool) async throws -> NegotiationAnalysisResult {
             try await Task.sleep(nanoseconds: 800_000_000)
             
             let lowerMsg = message.lowercased()
@@ -188,6 +189,5 @@ class MockAIService: AIServiceProtocol {
                 suggestionText: suggestion,
                 quickReplies: replies
             )
-        }
     }
 }

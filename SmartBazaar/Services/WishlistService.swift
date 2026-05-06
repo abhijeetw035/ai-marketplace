@@ -17,7 +17,7 @@ class FirebaseWishlistService: WishlistServiceProtocol {
             
         var listings: [Listing] = []
         for doc in snapshot.documents {
-            let listingId = doc.documentID
+            // documentID is used via savedItem.listingId below
             // Normally we'd use a cloud function or batch fetch to get all listing docs at once
             // For now, fetch individually or assume listing details are saved in the wishlist doc
             if let savedItem = try? doc.data(as: SavedItem.self) {
