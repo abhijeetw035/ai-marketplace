@@ -4,7 +4,7 @@ struct FeedView: View {
     @StateObject private var viewModel = FeedViewModel()
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Group {
                 if viewModel.isLoading {
                     ProgressView("Loading items...")
@@ -21,21 +21,61 @@ struct FeedView: View {
                         .padding()
                     }
                 } else {
-                    ScrollView {
+                    if viewModel.listings.isEmpty {
                         VStack(spacing: DesignSystem.Spacing.medium) {
-                            ForEach(viewModel.listings) { listing in
-                                NavigationLink(destination: ListingDetailView(listing: listing)) {
-                                    FeedItemCard(listing: listing)
-                                }
-                                .buttonStyle(PlainButtonStyle())
+                            Spacer()
+                            Image(systemName: "cart")
+                                .font(.system(size: 64))
+                                .foregroundColor(Theme.secondaryText)
+                            Text("No items found")
+                                .font(.title2)
+                                .fontWeight(.bold)
+                            Text("Check back later or be the first to sell something!")
+                                .font(.subheadline)
+                                .foregroundColor(Theme.secondaryText)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal)
+                            Button(action: {
+                                viewModel.fetchListings()
+                            }) {
+                                Text("Refresh")
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, DesignSystem.Spacing.extraLarge)
+                                    .padding(.vertical, DesignSystem.Spacing.small)
+                                    .background(Theme.accent)
+                                    .cornerRadius(DesignSystem.CornerRadius.medium)
                             }
+                            .padding(.top, DesignSystem.Spacing.small)
+                            Spacer()
                         }
-                        .padding()
+                    } else {
+                        ScrollView {
+                            VStack(spacing: DesignSystem.Spacing.medium) {
+                                ForEach(viewModel.listings) { listing in
+                                    NavigationLink(destination: ListingDetailView(listing: listing)) {
+                                        FeedItemCard(listing: listing)
+                                    }
+                                    .buttonStyle(PlainButtonStyle())
+                                    .onAppear {
+                                        if listing.id == viewModel.listings.last?.id {
+                                            viewModel.loadMoreListings()
+                                        }
+                                    }
+                                }
+                                
+                                if viewModel.isLoadingMore {
+                                    ProgressView()
+                                        .padding()
+                                }
+                            }
+                            .padding()
+                        }
                     }
                 }
             }
             .navigationTitle("Marketplace")
-            .background(Theme.secondaryBackground)
+            .background(Theme.background)
             .onAppear {
                 if viewModel.listings.isEmpty {
                     viewModel.fetchListings()

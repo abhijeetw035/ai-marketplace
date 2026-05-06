@@ -7,7 +7,7 @@ struct MainTabView: View {
         TabView(selection: $selectedTab) {
             FeedView()
                 .tabItem {
-                    Label("Home", systemImage: "house")
+                    Label("Home", systemImage: "house.fill")
                 }
                 .tag(0)
             
@@ -25,13 +25,13 @@ struct MainTabView: View {
             
             WishlistView()
                 .tabItem {
-                    Label("Saved", systemImage: "heart")
+                    Label("Saved", systemImage: "heart.fill")
                 }
                 .tag(3)
             
             ProfileView()
                 .tabItem {
-                    Label("Profile", systemImage: "person")
+                    Label("Profile", systemImage: "person.fill")
                 }
                 .tag(4)
         }

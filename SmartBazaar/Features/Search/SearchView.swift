@@ -4,7 +4,7 @@ struct SearchView: View {
     @StateObject private var viewModel = SearchViewModel()
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack {
                 HStack {
                     Image(systemName: "sparkles")
@@ -61,7 +61,7 @@ struct SearchView: View {
                 }
             }
             .navigationTitle("Search")
-            .background(Theme.secondaryBackground)
+            .background(Theme.background)
         }
     }
 }

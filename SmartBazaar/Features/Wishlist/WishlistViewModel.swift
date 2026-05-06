@@ -6,22 +6,24 @@ class WishlistViewModel: ObservableObject {
     @Published var savedListings: [Listing] = []
     @Published var isLoading: Bool = false
     
-    private let listingService: ListingServiceProtocol
+    private let wishlistService: WishlistServiceProtocol
+    private let authService: AuthServiceProtocol
     
-    init(listingService: ListingServiceProtocol? = nil) {
-        self.listingService = listingService ?? MockListingService()
+    init(wishlistService: WishlistServiceProtocol? = nil, authService: AuthServiceProtocol? = nil) {
+        self.wishlistService = wishlistService ?? FirebaseWishlistService()
+        self.authService = authService ?? FirebaseAuthService()
     }
     
     func fetchWishlist() {
+        guard let currentUser = authService.currentUser else { return }
         isLoading = true
         Task {
             do {
-                // In a real app, fetch only wishlist items
-                let feed = try await listingService.fetchFeed(page: 1)
-                self.savedListings = Array(feed.prefix(1)) // Mock: grab the first item
+                let items = try await wishlistService.fetchSavedItems(userId: currentUser.id)
+                self.savedListings = items
                 self.isLoading = false
             } catch {
-                print("Failed to fetch wishlist")
+                print("Failed to fetch wishlist: \(error)")
                 self.isLoading = false
             }
         }

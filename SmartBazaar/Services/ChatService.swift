@@ -20,3 +20,43 @@ class MockChatService: ChatServiceProtocol {
         return Message(id: UUID().uuidString, chatId: chatId, senderId: "currentUser123", text: text, mediaUrl: nil, timestamp: Date(), readStatus: false, offerAmount: offerAmount)
     }
 }
+
+import FirebaseFirestore
+
+class FirebaseChatService: ChatServiceProtocol {
+    private let db = Firestore.firestore()
+    
+    func fetchMessages(for chatId: String) async throws -> [Message] {
+        let snapshot = try await db.collection("chats").document(chatId).collection("messages")
+            .order(by: "timestamp", descending: false)
+            .getDocuments()
+            
+        return snapshot.documents.compactMap { doc -> Message? in
+            try? doc.data(as: Message.self)
+        }
+    }
+    
+    func sendMessage(chatId: String, text: String, offerAmount: Double?) async throws -> Message {
+        let newMessage = Message(
+            id: UUID().uuidString,
+            chatId: chatId,
+            senderId: "currentUser123", // Should come from AuthService
+            text: text,
+            mediaUrl: nil,
+            timestamp: Date(),
+            readStatus: false,
+            offerAmount: offerAmount
+        )
+        
+        let docRef = db.collection("chats").document(chatId).collection("messages").document(newMessage.id)
+        try docRef.setData(from: newMessage)
+        
+        // Update the last message on the chat document
+        try await db.collection("chats").document(chatId).setData([
+            "lastMessage": text,
+            "updatedAt": Timestamp(date: Date())
+        ], merge: true)
+        
+        return newMessage
+    }
+}
