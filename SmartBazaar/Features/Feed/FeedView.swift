@@ -2,6 +2,7 @@ import SwiftUI
 
 struct FeedView: View {
     @StateObject private var viewModel = FeedViewModel()
+    private let analytics = AnalyticsService.shared
     
     var body: some View {
         NavigationStack {
@@ -9,62 +10,66 @@ struct FeedView: View {
                 OfflineBanner(pendingCount: viewModel.pendingSyncCount)
                 
                 Group {
-                if viewModel.isLoading {
-                    ProgressView("Loading items...")
-                } else if let error = viewModel.errorMessage {
-                    VStack {
-                        Text("Failed to load feed.")
-                            .foregroundColor(Theme.error)
-                        Text(error)
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                        Button("Retry") {
-                            viewModel.fetchListings()
+                    if viewModel.isLoading {
+                        FeedSkeletonList()
+                    } else if let error = viewModel.errorMessage {
+                        VStack(spacing: DesignSystem.Spacing.medium) {
+                            Spacer()
+                            Image(systemName: "exclamationmark.triangle")
+                                .font(.system(size: 48))
+                                .foregroundColor(Theme.warning)
+                            Text("Failed to load feed.")
+                                .font(DesignSystem.Typography.headline)
+                                .foregroundColor(Theme.primary)
+                            Text(error)
+                                .font(.caption)
+                                .foregroundColor(Theme.secondaryText)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal)
+                            Button("Retry") { viewModel.fetchListings() }
+                                .buttonStyle(PrimaryButtonStyle())
+                                .padding(.horizontal, 48)
+                            Spacer()
                         }
-                        .padding()
-                    }
-                } else {
-                    if viewModel.listings.isEmpty {
+                    } else if viewModel.listings.isEmpty {
                         VStack(spacing: DesignSystem.Spacing.medium) {
                             Spacer()
                             Image(systemName: "cart")
                                 .font(.system(size: 64))
                                 .foregroundColor(Theme.secondaryText)
                             Text("No items found")
-                                .font(.title2)
-                                .fontWeight(.bold)
+                                .font(DesignSystem.Typography.title)
                             Text("Check back later or be the first to sell something!")
                                 .font(.subheadline)
                                 .foregroundColor(Theme.secondaryText)
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal)
-                            Button(action: {
-                                viewModel.fetchListings()
-                            }) {
-                                Text("Refresh")
-                                    .fontWeight(.semibold)
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, DesignSystem.Spacing.extraLarge)
-                                    .padding(.vertical, DesignSystem.Spacing.small)
-                                    .background(Theme.accent)
-                                    .cornerRadius(DesignSystem.CornerRadius.medium)
-                            }
-                            .padding(.top, DesignSystem.Spacing.small)
+                            Button("Refresh") { viewModel.fetchListings() }
+                                .buttonStyle(PrimaryButtonStyle())
+                                .padding(.horizontal, 48)
+                                .padding(.top, DesignSystem.Spacing.tiny)
                             Spacer()
                         }
                     } else {
                         ScrollView {
                             VStack(spacing: DesignSystem.Spacing.medium) {
-                                ForEach(viewModel.listings) { listing in
+                                ForEach(Array(viewModel.listings.enumerated()), id: \.element.id) { index, listing in
                                     NavigationLink(destination: ListingDetailView(listing: listing)) {
                                         FeedItemCard(listing: listing)
                                     }
-                                    .buttonStyle(PlainButtonStyle())
+                                    .buttonStyle(ScalePressButtonStyle())
+                                    .appearAnimation(delay: Double(min(index, 6)) * 0.06)
                                     .onAppear {
                                         if listing.id == viewModel.listings.last?.id {
                                             viewModel.loadMoreListings()
+                                            analytics.log(.feedPaginationLoaded(page: viewModel.listings.count / 20 + 1))
                                         }
                                     }
+                                    .simultaneousGesture(
+                                        TapGesture().onEnded {
+                                            analytics.log(.listingCardTapped(listingId: listing.id, title: listing.title))
+                                        }
+                                    )
                                 }
                                 
                                 if viewModel.isLoadingMore {
@@ -76,14 +81,20 @@ struct FeedView: View {
                         }
                     }
                 }
-                }
                 .background(Theme.background)
             } // end VStack
             .navigationTitle("Marketplace")
-            .onAppear {
-                if viewModel.listings.isEmpty {
-                    viewModel.fetchListings()
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: { viewModel.fetchListings() }) {
+                        Image(systemName: "arrow.clockwise")
+                            .foregroundColor(Theme.accent)
+                    }
                 }
+            }
+            .onAppear {
+                if viewModel.listings.isEmpty { viewModel.fetchListings() }
+                analytics.log(.feedViewed)
             }
         }
     }
