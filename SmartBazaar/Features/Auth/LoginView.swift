@@ -1,74 +1,97 @@
 import SwiftUI
 
 struct LoginView: View {
-    @StateObject private var viewModel = AuthViewModel()
+    @ObservedObject var viewModel: AuthViewModel
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: DesignSystem.Spacing.large) {
                 Spacer()
                 
                 VStack(spacing: DesignSystem.Spacing.small) {
-                    Text("SmartBazaar")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
+                    Image(systemName: "bag.fill.badge.plus")
+                        .font(.system(size: 60))
                         .foregroundColor(Theme.accent)
+                        .padding(.bottom, DesignSystem.Spacing.small)
+                    
+                    Text("SmartBazaar")
+                        .font(DesignSystem.Typography.largeTitle)
+                        .foregroundColor(Theme.primary)
                     
                     Text("The AI-Powered Marketplace")
-                        .font(.subheadline)
+                        .font(DesignSystem.Typography.body)
                         .foregroundColor(Theme.secondaryText)
                 }
+                .appearAnimation()
                 
                 VStack(spacing: DesignSystem.Spacing.medium) {
-                    TextField("Email", text: $viewModel.email)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .keyboardType(.emailAddress)
-                        .autocapitalization(.none)
+                    VStack(alignment: .leading, spacing: DesignSystem.Spacing.tiny) {
+                        Text("Email")
+                            .font(DesignSystem.Typography.caption)
+                            .foregroundColor(Theme.secondaryText)
+                        TextField("Enter your email", text: $viewModel.email)
+                            .padding()
+                            .background(Theme.secondaryBackground)
+                            .cornerRadius(DesignSystem.CornerRadius.small)
+                            .keyboardType(.emailAddress)
+                            .autocapitalization(.none)
+                    }
                     
-                    SecureField("Password", text: $viewModel.password)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                    VStack(alignment: .leading, spacing: DesignSystem.Spacing.tiny) {
+                        Text("Password")
+                            .font(DesignSystem.Typography.caption)
+                            .foregroundColor(Theme.secondaryText)
+                        SecureField("Enter your password", text: $viewModel.password)
+                            .padding()
+                            .background(Theme.secondaryBackground)
+                            .cornerRadius(DesignSystem.CornerRadius.small)
+                    }
                 }
                 .padding(.horizontal)
+                .appearAnimation(delay: 0.1)
                 
                 if let error = viewModel.errorMessage {
                     Text(error)
                         .foregroundColor(Theme.error)
-                        .font(.caption)
+                        .font(DesignSystem.Typography.caption)
+                        .padding(.horizontal)
                 }
                 
-                Button(action: {
-                    viewModel.login()
-                }) {
-                    HStack {
+                VStack(spacing: DesignSystem.Spacing.medium) {
+                    Button(action: {
+                        viewModel.login()
+                    }) {
                         if viewModel.isLoading {
-                            ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                .padding(.trailing, 4)
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        } else {
+                            Text("Log In")
                         }
-                        Text(viewModel.isLoading ? "Logging in..." : "Log In")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
                     }
-                    .padding()
-                    .background(Theme.accent)
-                    .cornerRadius(DesignSystem.CornerRadius.medium)
+                    .buttonStyle(PrimaryButtonStyle())
+                    .disabled(viewModel.isLoading)
+                    
+                    NavigationLink(destination: SignupView(viewModel: viewModel)) {
+                        HStack {
+                            Text("Don't have an account?")
+                                .foregroundColor(Theme.secondaryText)
+                            Text("Sign Up")
+                                .fontWeight(.bold)
+                                .foregroundColor(Theme.accent)
+                        }
+                        .font(DesignSystem.Typography.body)
+                    }
                 }
                 .padding(.horizontal)
-                .disabled(viewModel.isLoading)
-                
-                NavigationLink(destination: SignupView(viewModel: viewModel)) {
-                    Text("Don't have an account? Sign Up")
-                        .foregroundColor(Theme.accent)
-                }
+                .appearAnimation(delay: 0.2)
                 
                 Spacer()
             }
-            .navigationBarHidden(true)
             .background(Theme.background)
         }
     }
 }
 
 #Preview {
-    LoginView()
+    LoginView(viewModel: AuthViewModel())
 }

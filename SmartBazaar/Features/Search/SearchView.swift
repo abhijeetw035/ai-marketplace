@@ -50,53 +50,54 @@ struct SearchView: View {
                 // Body
                 Group {
                     if viewModel.isLoading {
-                        Spacer()
-                        VStack(spacing: DesignSystem.Spacing.medium) {
-                            ProgressView()
-                            Text("Analyzing intent...")
-                                .font(.subheadline)
-                                .foregroundColor(Theme.secondaryText)
-                        }
-                        Spacer()
-                        
+                        FeedSkeletonList()
                     } else if viewModel.hasSearched && viewModel.searchResults.isEmpty {
                         // No-result fallback
-                        Spacer()
                         VStack(spacing: DesignSystem.Spacing.medium) {
+                            Spacer()
                             Image(systemName: "questionmark.folder")
-                                .font(.system(size: 52))
-                                .foregroundColor(Theme.warning)
+                                .font(.system(size: 64))
+                                .foregroundColor(Theme.warning.opacity(0.4))
+                            
                             Text("No perfect matches found")
-                                .font(.headline)
+                                .font(DesignSystem.Typography.title)
+                                .foregroundColor(Theme.primary)
+                            
                             if let intent = viewModel.extractedIntent {
                                 Text(intent)
-                                    .font(.caption)
+                                    .font(DesignSystem.Typography.caption)
                                     .foregroundColor(Theme.success)
-                                    .padding(.horizontal)
+                                    .padding(.horizontal, DesignSystem.Spacing.medium)
+                                    .padding(.vertical, 6)
+                                    .background(Theme.success.opacity(0.1))
+                                    .cornerRadius(DesignSystem.CornerRadius.pill)
                             }
-                            Text("Try broadening your keywords or adjusting the budget.")
-                                .font(.subheadline)
+                            
+                            Text("Describe your need differently or broaden your keywords.")
+                                .font(DesignSystem.Typography.body)
                                 .foregroundColor(Theme.secondaryText)
                                 .multilineTextAlignment(.center)
-                                .padding(.horizontal)
+                                .padding(.horizontal, 40)
+                            
+                            Spacer()
                         }
-                        Spacer()
+                        .appearAnimation()
                         
                     } else if !viewModel.searchResults.isEmpty {
                         // Results
-                        Text("\(viewModel.searchResults.count) result\(viewModel.searchResults.count == 1 ? "" : "s") found")
-                            .font(.caption)
-                            .foregroundColor(Theme.secondaryText)
-                            .padding(.horizontal)
-                            .padding(.top, 8)
-                        
                         ScrollView {
-                            VStack(spacing: DesignSystem.Spacing.medium) {
-                                ForEach(viewModel.searchResults) { listing in
+                            VStack(alignment: .leading, spacing: DesignSystem.Spacing.medium) {
+                                Text("\(viewModel.searchResults.count) result\(viewModel.searchResults.count == 1 ? "" : "s") found")
+                                    .font(DesignSystem.Typography.caption)
+                                    .foregroundColor(Theme.secondaryText)
+                                    .padding(.horizontal)
+                                
+                                ForEach(Array(viewModel.searchResults.enumerated()), id: \.element.id) { index, listing in
                                     NavigationLink(destination: ListingDetailView(listing: listing)) {
                                         FeedItemCard(listing: listing)
                                     }
-                                    .buttonStyle(PlainButtonStyle())
+                                    .buttonStyle(ScalePressButtonStyle())
+                                    .appearAnimation(delay: Double(index) * 0.05)
                                 }
                             }
                             .padding()
@@ -104,38 +105,61 @@ struct SearchView: View {
                         
                     } else {
                         // Empty / pre-search state
-                        Spacer()
-                        VStack(spacing: DesignSystem.Spacing.medium) {
-                            Image(systemName: "magnifyingglass")
-                                .font(.system(size: 52))
-                                .foregroundColor(Color.gray.opacity(0.4))
-                            Text("Search with intent")
-                                .font(.headline)
-                            Text("Describe what you need. Our AI understands use cases, budgets, and categories.")
-                                .font(.subheadline)
-                                .foregroundColor(Theme.secondaryText)
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal, 32)
+                        VStack(spacing: DesignSystem.Spacing.large) {
+                            Spacer()
+                            
+                            VStack(spacing: DesignSystem.Spacing.medium) {
+                                Image(systemName: "magnifyingglass.circle.fill")
+                                    .font(.system(size: 80))
+                                    .foregroundColor(Theme.accent.opacity(0.1))
+                                
+                                Text("Search with intent")
+                                    .font(DesignSystem.Typography.title)
+                                    .foregroundColor(Theme.primary)
+                                
+                                Text("Describe what you need. Our AI understands use cases, budgets, and categories.")
+                                    .font(DesignSystem.Typography.body)
+                                    .foregroundColor(Theme.secondaryText)
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal, 40)
+                            }
+                            .appearAnimation()
                             
                             // Suggestion chips
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("Try:")
-                                    .font(.caption)
-                                    .foregroundColor(Theme.secondaryText)
-                                ForEach(searchSuggestions, id: \.self) { suggestion in
-                                    Button(action: {
-                                        viewModel.query = suggestion
-                                        viewModel.performSearch()
-                                    }) {
-                                        Text("→ \(suggestion)")
-                                            .font(.subheadline)
-                                            .foregroundColor(Theme.accent)
+                            VStack(alignment: .leading, spacing: DesignSystem.Spacing.medium) {
+                                Text("Popular Intents")
+                                    .font(DesignSystem.Typography.headline)
+                                    .foregroundColor(Theme.primary)
+                                
+                                VStack(alignment: .leading, spacing: 10) {
+                                    ForEach(Array(searchSuggestions.enumerated()), id: \.offset) { index, suggestion in
+                                        Button(action: {
+                                            viewModel.query = suggestion
+                                            viewModel.performSearch()
+                                        }) {
+                                            HStack {
+                                                Image(systemName: "sparkles")
+                                                    .font(.caption)
+                                                Text(suggestion)
+                                                    .font(DesignSystem.Typography.body)
+                                                Spacer()
+                                                Image(systemName: "arrow.up.left")
+                                                    .font(.caption)
+                                            }
+                                            .padding()
+                                            .background(Theme.background)
+                                            .cornerRadius(DesignSystem.CornerRadius.medium)
+                                            .shadow(color: .black.opacity(0.03), radius: 5, x: 0, y: 2)
+                                        }
+                                        .buttonStyle(ScalePressButtonStyle())
+                                        .appearAnimation(delay: 0.1 + Double(index) * 0.05)
                                     }
                                 }
                             }
-                            .padding(.top, 8)
+                            .padding(.horizontal)
+                            
+                            Spacer()
                         }
-                        Spacer()
                     }
                 }
             }

@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import PhotosUI
 
 @MainActor
 class CreateListingViewModel: ObservableObject {
@@ -8,6 +9,15 @@ class CreateListingViewModel: ObservableObject {
     @Published var price: String = ""
     @Published var category: String = "Electronics"
     @Published var condition: String = "Good"
+    
+    @Published var selectedItems: [PhotosPickerItem] = [] {
+        didSet {
+            Task {
+                await loadImages(from: selectedItems)
+            }
+        }
+    }
+    @Published var selectedImagesData: [Data] = []
     
     @Published var isPublishing: Bool = false
     @Published var isFetchingSuggestion: Bool = false
@@ -64,12 +74,23 @@ class CreateListingViewModel: ObservableObject {
         isPublishing = true
         errorMessage = nil
         
+        var uploadedImageUrls: [String] = []
+        if !selectedImagesData.isEmpty {
+            do {
+                uploadedImageUrls = try await listingService.uploadImages(images: selectedImagesData)
+            } catch {
+                errorMessage = "Failed to upload images: \(error.localizedDescription)"
+                isPublishing = false
+                return
+            }
+        }
+        
         let newListing = Listing(
             id: UUID().uuidString,
             sellerId: "currentUser123", // To get from AuthService
             title: title,
             description: description,
-            images: [],
+            images: uploadedImageUrls,
             category: category,
             condition: condition,
             price: priceValue,
@@ -87,6 +108,18 @@ class CreateListingViewModel: ObservableObject {
         } catch {
             errorMessage = error.localizedDescription
             isPublishing = false
+        }
+    }
+    
+    private func loadImages(from items: [PhotosPickerItem]) async {
+        var dataArray: [Data] = []
+        for item in items {
+            if let data = try? await item.loadTransferable(type: Data.self) {
+                dataArray.append(data)
+            }
+        }
+        await MainActor.run {
+            self.selectedImagesData = dataArray
         }
     }
 }

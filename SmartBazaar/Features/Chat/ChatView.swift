@@ -149,7 +149,7 @@ struct ChatBubble: View {
 }
 
 #Preview {
-    NavigationView {
+    NavigationStack {
         ChatView()
     }
 }

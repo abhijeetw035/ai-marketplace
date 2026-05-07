@@ -4,32 +4,39 @@ struct WishlistView: View {
     @StateObject private var viewModel = WishlistViewModel()
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Group {
                 if viewModel.isLoading {
-                    ProgressView()
+                    FeedSkeletonList()
                 } else if viewModel.savedListings.isEmpty {
-                    VStack {
+                    VStack(spacing: DesignSystem.Spacing.medium) {
                         Spacer()
-                        Image(systemName: "heart.slash")
-                            .font(.system(size: 48))
-                            .foregroundColor(.gray)
-                            .padding(.bottom, DesignSystem.Spacing.small)
+                        Image(systemName: "heart.fill")
+                            .font(.system(size: 64))
+                            .foregroundColor(Theme.secondaryText.opacity(0.3))
+                        
                         Text("No saved items yet")
-                            .font(.headline)
-                        Text("Items you favorite will appear here.")
-                            .font(.subheadline)
+                            .font(DesignSystem.Typography.title)
+                            .foregroundColor(Theme.primary)
+                        
+                        Text("Items you favorite will appear here so you can find them later.")
+                            .font(DesignSystem.Typography.body)
                             .foregroundColor(Theme.secondaryText)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, DesignSystem.Spacing.extraLarge)
+                        
                         Spacer()
                     }
+                    .appearAnimation()
                 } else {
                     ScrollView {
                         VStack(spacing: DesignSystem.Spacing.medium) {
-                            ForEach(viewModel.savedListings) { listing in
+                            ForEach(Array(viewModel.savedListings.enumerated()), id: \.element.id) { index, listing in
                                 NavigationLink(destination: ListingDetailView(listing: listing)) {
                                     FeedItemCard(listing: listing)
                                 }
-                                .buttonStyle(PlainButtonStyle())
+                                .buttonStyle(ScalePressButtonStyle())
+                                .appearAnimation(delay: Double(index) * 0.05)
                             }
                         }
                         .padding()

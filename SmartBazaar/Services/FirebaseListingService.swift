@@ -1,4 +1,5 @@
 import FirebaseFirestore
+import FirebaseStorage
 
 class FirebaseListingService: ListingServiceProtocol {
     private let db = Firestore.firestore()
@@ -48,17 +49,29 @@ class FirebaseListingService: ListingServiceProtocol {
     }
     
     func uploadImages(images: [Data]) async throws -> [String] {
-        // Implementation for Firebase Storage image upload
-        // Assuming FirebaseStorage is imported and initialized in the real app
-        // For phase 2 compliance, we will simulate the URLs if FirebaseStorage isn't fully added
         var urls: [String] = []
-        for (index, _) in images.enumerated() {
-            // let storageRef = Storage.storage().reference().child("listings/\(UUID().uuidString).jpg")
-            // _ = try await storageRef.putDataAsync(data)
-            // let url = try await storageRef.downloadURL()
-            // urls.append(url.absoluteString)
-            urls.append("https://via.placeholder.com/400?text=Image+\(index)")
+        let storageRef = Storage.storage().reference()
+        
+        for data in images {
+            let imageRef = storageRef.child("listings/\(UUID().uuidString).jpg")
+            let metadata = StorageMetadata()
+            metadata.contentType = "image/jpeg"
+            
+            _ = try await imageRef.putDataAsync(data, metadata: metadata)
+            let downloadURL = try await imageRef.downloadURL()
+            urls.append(downloadURL.absoluteString)
         }
         return urls
+    }
+    
+    func fetchListings(bySellerId sellerId: String) async throws -> [Listing] {
+        let snapshot = try await db.collection("listings")
+            .whereField("sellerId", isEqualTo: sellerId)
+            .order(by: "createdAt", descending: true)
+            .getDocuments()
+            
+        return snapshot.documents.compactMap { doc -> Listing? in
+            try? doc.data(as: Listing.self)
+        }
     }
 }

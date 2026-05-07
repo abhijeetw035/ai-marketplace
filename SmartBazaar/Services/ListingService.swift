@@ -6,6 +6,7 @@ protocol ListingServiceProtocol {
     func createListing(listing: Listing) async throws -> Listing
     func updateListing(listing: Listing) async throws -> Listing
     func uploadImages(images: [Data]) async throws -> [String]
+    func fetchListings(bySellerId: String) async throws -> [Listing]
 }
 
 class MockListingService: ListingServiceProtocol {
@@ -35,5 +36,10 @@ class MockListingService: ListingServiceProtocol {
     func uploadImages(images: [Data]) async throws -> [String] {
         try await Task.sleep(nanoseconds: 1_000_000_000)
         return images.map { _ in "https://via.placeholder.com/400" }
+    }
+    
+    func fetchListings(bySellerId: String) async throws -> [Listing] {
+        try await Task.sleep(nanoseconds: 1_000_000_000)
+        return []
     }
 }

@@ -13,11 +13,22 @@ class AuthViewModel: ObservableObject {
     @Published var isAuthenticated = false
     
     private let authService: AuthServiceProtocol
+    private var cancellables = Set<AnyCancellable>()
     
     init(authService: AuthServiceProtocol? = nil) {
         let service = authService ?? FirebaseAuthService()
         self.authService = service
         self.isAuthenticated = service.isAuthenticated
+        
+        // Observe auth state changes if service is observable
+        if let observableService = service as? FirebaseAuthService {
+            observableService.$currentUser
+                .receive(on: RunLoop.main)
+                .sink { [weak self] user in
+                    self?.isAuthenticated = user != nil
+                }
+                .store(in: &cancellables)
+        }
     }
     
     func login() {
